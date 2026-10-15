@@ -26,6 +26,8 @@ wheels/
 .coverage
 htmlcov/
 .venv/
+uv.lock
+*.lock
 
 # Node & Frontend
 node_modules/
