@@ -117,7 +117,7 @@ def test_get_current_user_profile(client, auth_headers):
     assert data["email"] == "primary_user@example.com"
     assert data["full_name"] == "Primary User"
     assert data["is_active"] is True
-    assert "password_hash" not in data  # Ensure security requirement: never expose password hash
+    assert "password_hash" not in data
 
 
 def test_unauthorized_request(client):
@@ -129,4 +129,78 @@ def test_logout(client, auth_headers):
     resp = client.post("/api/v1/auth/logout", headers=auth_headers)
     assert resp.status_code == 200
     assert "Successfully logged out" in resp.json()["message"]
+
+
+def test_login_rate_limiting_exceeded(client):
+    email = "ratelimit_target@example.com"
+    for i in range(10):
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": "WrongPassword123!"},
+        )
+        assert resp.status_code == 401
+        assert resp.headers.get("X-RateLimit-Limit") == "10"
+        assert int(resp.headers.get("X-RateLimit-Remaining")) == 9 - i
+
+    resp_11 = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "WrongPassword123!"},
+    )
+    assert resp_11.status_code == 429
+    assert "Too many login attempts" in resp_11.json()["detail"]
+    assert "10 hits per 2 hours" in resp_11.json()["detail"]
+    assert "Retry-After" in resp_11.headers
+    assert int(resp_11.headers["Retry-After"]) > 0
+
+
+def test_login_rate_limiting_per_user_isolation(client):
+    user_a = "user_blocked@example.com"
+    user_b = "user_allowed@example.com"
+
+    for _ in range(10):
+        client.post(
+            "/api/v1/auth/login",
+            json={"email": user_a, "password": "WrongPassword!"},
+        )
+
+    blocked_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": user_a, "password": "WrongPassword!"},
+    )
+    assert blocked_resp.status_code == 429
+
+    b_payload = {
+        "email": user_b,
+        "password": "Password123!",
+        "full_name": "User B",
+    }
+    client.post("/api/v1/auth/register", json=b_payload)
+
+    allowed_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": user_b, "password": "Password123!"},
+    )
+    assert allowed_resp.status_code == 200
+    assert "access_token" in allowed_resp.json()
+
+
+def test_login_rate_limiting_refreshes_after_window(client):
+    from app.core.rate_limiter import login_rate_limiter
+    import time
+
+    email = "sliding_window_user@example.com"
+    current_fake_time = time.time()
+
+    for _ in range(10):
+        login_rate_limiter.check_rate_limit(email, current_time=current_fake_time)
+
+    allowed, _, retry_after = login_rate_limiter.check_rate_limit(email, current_time=current_fake_time)
+    assert allowed is False
+    assert retry_after > 0
+
+    after_2_hours = current_fake_time + 7201
+    allowed_later, remaining, _ = login_rate_limiter.check_rate_limit(email, current_time=after_2_hours)
+    assert allowed_later is True
+    assert remaining == 9
+
 

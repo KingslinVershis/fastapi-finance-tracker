@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, get_db
+from app.core.rate_limiter import enforce_login_rate_limit
 from app.models.user import User
 from app.schemas.auth import LoginRequest, MessageResponse, RefreshTokenRequest, Token
 from app.schemas.user import UserCreate
@@ -27,33 +28,53 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+    user_key = login_data.email.strip().lower()
+    remaining, limit = enforce_login_rate_limit(user_key)
+    rate_headers = {
+        "X-RateLimit-Limit": str(limit),
+        "X-RateLimit-Remaining": str(remaining),
+    }
+    response.headers["X-RateLimit-Limit"] = str(limit)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+
     user = authenticate_user(db, email=login_data.email, password=login_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer", **rate_headers},
         )
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account is currently inactive.",
+            headers=rate_headers,
         )
     return create_user_tokens(user.id)
 
 
 @router.post("/login/form", response_model=Token, include_in_schema=True)
 def login_form(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
+    user_key = form_data.username.strip().lower()
+    remaining, limit = enforce_login_rate_limit(user_key)
+    rate_headers = {
+        "X-RateLimit-Limit": str(limit),
+        "X-RateLimit-Remaining": str(remaining),
+    }
+    response.headers["X-RateLimit-Limit"] = str(limit)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+
     user = authenticate_user(db, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password.",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer", **rate_headers},
         )
     return create_user_tokens(user.id)
 

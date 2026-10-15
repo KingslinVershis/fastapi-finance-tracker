@@ -30,6 +30,16 @@ import app.database.session as session_module
 session_module.SessionLocal = TestingSessionLocal
 
 
+from app.core.rate_limiter import login_rate_limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter_fixture():
+    login_rate_limiter.reset()
+    yield
+    login_rate_limiter.reset()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     Base.metadata.create_all(bind=engine)
