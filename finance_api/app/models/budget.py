@@ -11,10 +11,10 @@ class Budget(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(100), nullable=False)
-    type = Column(String(20), nullable=False, index=True)  # "expense" or "income"
+    type = Column(String(20), nullable=False, index=True)
     threshold_amount = Column(Numeric(precision=12, scale=2), nullable=False)
-    period = Column(String(20), nullable=False, default="monthly")  # "monthly" or "per_transaction"
-    alert_email = Column(String(255), nullable=True)  # Optional override email, defaults to user.email
+    period = Column(String(20), nullable=False, default="monthly")
+    alert_email = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     last_triggered_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -35,7 +35,6 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
-    # Email & SMTP Alert Configuration
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""

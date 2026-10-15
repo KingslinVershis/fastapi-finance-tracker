@@ -157,9 +157,6 @@ def delete_all_user_transactions(db: Session, user_id: int) -> int:
     return deleted_count
 
 
-# =====================================================================
-# Universal Multi-Template Normalization Helpers (PDF / CSV / JSON)
-# =====================================================================
 
 DATE_TOKEN_REGEX = re.compile(
     r"\b("
@@ -233,17 +230,14 @@ def _classify_column_header(raw_header: Any) -> Optional[str]:
     if not norm:
         return None
 
-    # 1. Balance column (must be identified first so 'Closing Balance' or 'Balance Amount' isn't treated as 'amount')
     if any(k in norm for k in ("balance", "closingbal", "openingbal", "runningbal", "availbal", "ledgerbal")) or norm == "bal":
         return "balance"
 
-    # 2. Type / DrCr indicator column (check before debit/credit so 'Dr/Cr' or 'Credit/Debit' is classified as 'type')
     if norm in {"drcr", "crdr", "debitcredit", "creditdebit", "type", "txntype", "transactiontype", "entrytype", "indicator", "direction", "flow"} or (
         norm in {"dr/cr", "cr/dr"} or bool(re.search(r"\b(dr\s*/\s*cr|cr\s*/\s*dr)\b", text))
     ):
         return "type"
 
-    # 3. Credit / Deposit / Income column (check before amount and description)
     if any(
         k in norm
         for k in (
@@ -270,7 +264,6 @@ def _classify_column_header(raw_header: Any) -> Optional[str]:
     ) or norm in {"cr", "in", "creditcr", "depositcr"}:
         return "credit"
 
-    # 4. Debit / Withdrawal / Expense column (check before amount and description)
     if any(
         k in norm
         for k in (
@@ -298,19 +291,15 @@ def _classify_column_header(raw_header: Any) -> Optional[str]:
     ) or norm in {"dr", "out", "paid", "debitdr", "withdrawaldr"}:
         return "debit"
 
-    # 5. Date column
     if any(k in norm for k in ("date", "txndt", "trandt", "valuedt", "postdt", "bookingdt", "timestamp", "datetime", "time")) or norm == "dt":
         return "date"
 
-    # 6. Reference / Cheque No / UTR / Instrument column
     if any(k in norm for k in ("cheque", "chq", "refno", "reference", "utr", "urn", "txnid", "instrument", "slip")) or norm in {"ref", "chqno", "refnum"}:
         return "reference"
 
-    # 7. Category column
     if any(k in norm for k in ("category", "tag", "group", "classification", "head")) or norm == "cat":
         return "category"
 
-    # 8. Description / Narration / Particulars column
     if any(
         k in norm
         for k in (
@@ -336,7 +325,6 @@ def _classify_column_header(raw_header: Any) -> Optional[str]:
     ):
         return "description"
 
-    # 9. Amount column (exact tokens or amount/amt/total/sum/net prefix, NOT loose 'rs' substring)
     if any(k in norm for k in ("amount", "amt", "value", "total", "sum", "net")) or norm in {"inr", "rs", "usd", "eur", "gbp"}:
         return "amount"
 
@@ -406,7 +394,6 @@ def _detect_direction_from_text(raw: Any) -> Optional[str]:
     if has_exp and not has_inc:
         return "expense"
     if has_inc and has_exp:
-        # Resolve conflict: If compound income phrases appear, income wins!
         strong_inc = bool(
             re.search(
                 r"\b(payment\s*received|amount\s*received|funds\s*received|received\s*from|payment\s*from"
@@ -435,20 +422,17 @@ def _parse_amount_and_direction(raw: Any) -> Tuple[Optional[Decimal], Optional[s
     if not text or text in {"-", "--", "nil", "null", "none", "n/a", "na"}:
         return None, None
 
-    # Do not mistake a pure date string for an amount
     if DATE_TOKEN_REGEX.fullmatch(text):
         return None, None
 
     direction = _detect_direction_from_text(text)
 
-    # Remove date substrings if any exist inside the cell before looking for numbers
     text_no_dates = DATE_TOKEN_REGEX.sub(" ", text)
 
     is_paren_negative = "(" in text_no_dates and ")" in text_no_dates and bool(
         re.search(r"\(\s*[₹$€£]?\s*\d", text_no_dates)
     )
 
-    # Find numeric value pattern
     num_match = re.search(
         r"([+\-])?\s*(?:₹|rs\.?|inr|\$|€|£)?\s*(\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)",
         text_no_dates,
@@ -460,7 +444,6 @@ def _parse_amount_and_direction(raw: Any) -> Tuple[Optional[Decimal], Optional[s
     sign_char = num_match.group(1) or ""
     digits_part = num_match.group(2).replace(",", "")
 
-    # Avoid treating long 10+ digit integers (like UPI/account/reference numbers without decimals) as amounts
     if "." not in digits_part and len(digits_part) >= 10:
         return None, direction
 
@@ -489,7 +472,6 @@ def _parse_flexible_date(raw: Any) -> datetime:
         return datetime.now(timezone.utc)
     text = str(raw).strip()
 
-    # Extract date token if extra text (like timestamp or narration) is attached
     date_match = DATE_TOKEN_REGEX.search(text)
     if date_match:
         text_candidate = date_match.group(1).strip()
@@ -506,7 +488,6 @@ def _parse_flexible_date(raw: Any) -> datetime:
         except ValueError:
             pass
 
-    # Normalize multiple spaces and 'Sept' -> 'Sep'
     norm_candidate = re.sub(r"\s+", " ", text_candidate)
     norm_candidate = re.sub(r"\bSept\b", Sep_str := "Sep", norm_candidate, flags=re.IGNORECASE)
 
@@ -582,9 +563,6 @@ def _infer_category_from_description(description: str, tx_type: str) -> str:
     return "Other"
 
 
-# =====================================================================
-# Structured Table Row Mapper (Shared by PDF Tables & CSV Sheets)
-# =====================================================================
 
 def _detect_header_mapping(row_cells: List[Any]) -> Optional[Dict[int, str]]:
     """
@@ -737,9 +715,6 @@ def _extract_dict_from_mapped_cells(
     }
 
 
-# =====================================================================
-# Multi-Layer PDF Transaction Extractor (pdfplumber + pypdf + Native)
-# =====================================================================
 
 def _extract_rows_via_pdfplumber_tables(pdf) -> List[Dict[str, Any]]:
     extracted: List[Dict[str, Any]] = []
@@ -825,7 +800,6 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                 continue
             line_str = " ".join(texts)
 
-            # 1. If the PDF uses pipe delimiters ('|'), map columns directly by pipe-separated cells!
             if "|" in line_str:
                 pipe_cells = [c.strip() for c in line_str.split("|")]
                 detected_pipe_map = _detect_header_mapping(pipe_cells)
@@ -842,7 +816,6 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                     extracted.extend(parsed_pipe)
                 continue
 
-            # 2. Check if this visual line is a borderless table header line
             header_role_positions: Dict[str, List[float]] = {}
             for w in word_line:
                 role = _classify_column_header(w.get("text", ""))
@@ -857,12 +830,10 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
             ):
                 for r_key, pos_list in header_role_positions.items():
                     col_x_centers[r_key] = sum(pos_list) / len(pos_list)
-                # When debit or credit is present, drop generic amount center from header labels like "Deposit Amt."
                 if ("debit" in col_x_centers or "credit" in col_x_centers) and "amount" in col_x_centers:
                     del col_x_centers["amount"]
                 continue
 
-            # 3. If we have coordinate centers for debit & credit columns, use X-coordinates when no explicit Cr/Dr is present
             date_match = DATE_TOKEN_REGEX.search(line_str)
             if date_match and ("debit" in col_x_centers or "credit" in col_x_centers):
                 date_str = date_match.group(1)
@@ -884,7 +855,6 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                     if w_text in date_str or DATE_TOKEN_REGEX.search(w_text):
                         continue
 
-                    # Only treat short standalone tokens (Cr, Dr, Credit, Debit, Withdraw, Deposit) as direction markers
                     if re.fullmatch(
                         r"(?:cr\.?|dr\.?|credit|debit|deposit|withdrawal|withdraw|income|expense)",
                         w_text,
@@ -895,13 +865,11 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
 
                     x_c = (float(w.get("x0", 0)) + float(w.get("x1", 0))) / 2.0
 
-                    # Ignore tokens inside reference column range
                     if ref_x is not None and abs(x_c - ref_x) <= 35:
                         continue
 
                     amt, amt_dir = _parse_amount_and_direction(w_text)
                     if amt is not None and abs(amt) > Decimal("0.00") and re.search(r"\d", w_text):
-                        # Filter out long integer reference numbers that have no decimals or currency symbols
                         if "." not in w_text and not any(c in w_text for c in "₹$€£,") and len(re.sub(r"\D", "", w_text)) >= 5:
                             desc_tokens.append(w_text)
                             continue
@@ -909,11 +877,9 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                         if amt_dir:
                             explicit_dir = amt_dir
 
-                        # Ignore balance column
                         if bal_x is not None and abs(x_c - bal_x) <= 45:
                             continue
 
-                        # Boundary midpoint partitioning between debit and credit
                         if deb_x is not None and cred_x is not None:
                             mid_x = (deb_x + cred_x) / 2.0
                             if deb_x < cred_x:
@@ -942,7 +908,6 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                 final_type: Optional[str] = explicit_dir
 
                 if explicit_dir is not None:
-                    # Explicit Cr/Dr/Credit/Debit/Deposit/Withdraw on the row always wins
                     final_amt = credit_amt or debit_amt or (abs(generic_amt) if generic_amt is not None else None)
                 elif credit_amt is not None and credit_amt > Decimal("0.00") and (debit_amt is None or debit_amt == Decimal("0.00")):
                     final_type = "income"
@@ -997,7 +962,6 @@ def _extract_rows_via_pdfplumber_words(pdf) -> List[Dict[str, Any]]:
                     )
                     continue
 
-            # 4. General line parser fallback
             parsed_line = _parse_pdf_transaction_lines([line_str])
             if parsed_line:
                 extracted.extend(parsed_line)
@@ -1087,7 +1051,6 @@ def _extract_pdf_cmap(stream_text: str, cmap: Dict[int, str]) -> None:
 def _extract_text_lines_from_pdf(content_bytes: bytes) -> List[str]:
     extracted_lines: List[str] = []
 
-    # 1. Try pdfplumber text extraction first
     try:
         import pdfplumber  # type: ignore
 
@@ -1102,7 +1065,6 @@ def _extract_text_lines_from_pdf(content_bytes: bytes) -> List[str]:
     except Exception:
         pass
 
-    # 2. Try pypdf text extraction
     try:
         import pypdf  # type: ignore
 
@@ -1117,7 +1079,6 @@ def _extract_text_lines_from_pdf(content_bytes: bytes) -> List[str]:
     except Exception:
         pass
 
-    # 3. Native Python PDF stream & CMap extractor
     decompressed_streams: List[str] = []
     cmap: Dict[int, str] = {}
 
@@ -1268,8 +1229,6 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
 
     has_balance_column = any("balance" in ln.lower() for ln in lines[:15])
 
-    # Pre-merge multi-line wrapped bank transactions:
-    # If a line starts with a date but has no amount, and the next line has no date but has an amount, merge them.
     merged_lines: List[str] = []
     idx = 0
     while idx < len(lines):
@@ -1326,7 +1285,6 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
         ) and not (DATE_TOKEN_REGEX.search(line) and any(c.isdigit() for c in line.split()[-1])):
             continue
 
-        # 1. Pipe or comma delimited line inside PDF
         if "|" in line or (line.count(",") >= 3 and DATE_TOKEN_REGEX.search(line)):
             delim = "|" if "|" in line else ","
             parts = [p.strip() for p in line.split(delim) if p.strip()]
@@ -1372,7 +1330,6 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
                     )
                     continue
 
-        # 2. General bank statement / PDF row
         date_match = DATE_TOKEN_REGEX.search(line)
         has_explicit_direction = _detect_direction_from_text(line) is not None
 
@@ -1382,13 +1339,11 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
         if date_match:
             date_str = date_match.group(1)
             last_seen_date = date_str
-            # Remove all date occurrences (e.g., Txn Date and Value Date) from `rest`
             rest = DATE_TOKEN_REGEX.sub(" ", line).strip()
         else:
             date_str = last_seen_date or ""
             rest = line
 
-        # Find all monetary tokens in `rest`
         amount_matches = list(
             re.finditer(
                 r"(?:[+\-]\s*)?(?:₹|rs\.?|inr|\$|€|£)?\s*\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?"
@@ -1430,7 +1385,6 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
 
         tx_type: Optional[str] = amt_dir or _detect_direction_from_text(rest)
 
-        # Mathematical running balance delta check
         if tx_type is None and last_seen_balance is not None and parsed_bal is not None:
             delta = parsed_bal - last_seen_balance
             if delta > Decimal("0.00") and abs(delta - abs(parsed_amt)) <= Decimal("0.05"):
@@ -1499,7 +1453,6 @@ def _parse_pdf_transaction_lines(lines: List[str]) -> List[Dict[str, Any]]:
 
 
 def _extract_rows_from_pdf(content_bytes: bytes) -> List[Dict[str, Any]]:
-    # 1. Try pdfplumber table extraction + word-coordinate extraction first
     try:
         import pdfplumber  # type: ignore
 
@@ -1513,7 +1466,6 @@ def _extract_rows_from_pdf(content_bytes: bytes) -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    # 2. Fallback to line-based extraction (pdfplumber text / pypdf / native stream decoder)
     pdf_lines = _extract_text_lines_from_pdf(content_bytes)
     return _parse_pdf_transaction_lines(pdf_lines)
 
@@ -1543,7 +1495,6 @@ def _extract_rows_from_csv(text: str) -> List[Dict[str, Any]]:
     if not all_rows:
         return []
 
-    # Locate the first row that matches a table header
     header_idx: Optional[int] = None
     header_map: Optional[Dict[int, str]] = None
     for idx, row in enumerate(all_rows[:30]):
@@ -1563,7 +1514,6 @@ def _extract_rows_from_csv(text: str) -> List[Dict[str, Any]]:
             if mapped_item:
                 extracted.append(mapped_item)
             else:
-                # Also keep raw header dictionary as fallback
                 row_dict = {
                     str(raw_headers[i]).strip(): data_row[i]
                     for i in range(min(len(raw_headers), len(data_row)))
@@ -1573,7 +1523,6 @@ def _extract_rows_from_csv(text: str) -> List[Dict[str, Any]]:
                     extracted.append(row_dict)
         return extracted
 
-    # Fallback: standard DictReader or headerless line parsing
     dict_rows = [dict(r) for r in csv.DictReader(io.StringIO(text), delimiter=delimiter) if r]
     if dict_rows:
         return dict_rows
@@ -1679,7 +1628,6 @@ def import_transactions_from_files(
                 continue
 
             try:
-                # Classify every key in raw_row using our universal column classifier
                 date_raw = None
                 desc_candidates: List[str] = []
                 cat_raw = None
@@ -1722,7 +1670,6 @@ def import_transactions_from_files(
                     elif role == "description":
                         desc_candidates.append(v_str)
                     else:
-                        # Unclassified column: check if value itself is a direction indicator or description
                         d_check = _detect_direction_from_text(v_str)
                         if d_check and len(v_str) <= 15 and type_hint is None:
                             type_hint = d_check

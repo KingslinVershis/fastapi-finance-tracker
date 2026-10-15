@@ -31,14 +31,12 @@ def create_user(db: Session, user_in: UserCreate) -> User:
 
 
 def seed_default_admin(db: Session) -> None:
-    # Ensure any existing user with admin@... email is marked as admin
     admin_prefix_users = db.query(User).filter(User.email.like("admin@%")).all()
     for u in admin_prefix_users:
         if not u.is_admin:
             u.is_admin = True
     db.commit()
 
-    # Ensure default admin@finance.in account exists if no admin is present
     any_admin = db.query(User).filter(User.is_admin == True).first()
     if not any_admin:
         default_admin = User(

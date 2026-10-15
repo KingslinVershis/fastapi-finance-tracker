@@ -47,7 +47,6 @@ def get_admin_overview(
         db.query(func.count(Category.id)).filter(Category.is_system == False).scalar() or 0
     )
 
-    # Per-user transaction stats
     user_stats_rows = (
         db.query(
             Transaction.user_id,

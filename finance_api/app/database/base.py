@@ -1,4 +1,3 @@
-# Import Base and all models so that Alembic has access to their metadata
 from app.database.session import Base
 from app.models.user import User
 from app.models.category import Category

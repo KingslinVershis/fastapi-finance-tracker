@@ -199,7 +199,6 @@ def send_threshold_alert_email(
     smtp_pass = settings.clean_smtp_password
     from_email = settings.clean_emails_from_email
 
-    # If SMTP is configured, attempt actual network delivery over internet
     if smtp_host:
         try:
             msg = MIMEMultipart("alternative")
@@ -229,7 +228,6 @@ def send_threshold_alert_email(
             logger.error("Failed to send alert email via SMTP to %s via %s: %s", recipient_email, smtp_host, exc)
             return False, f"SMTP Delivery Failed: {err_msg[:120]}"
 
-    # Mock / Development mode fallback: log cleanly to logger
     logger.info("Mock SMTP mode: alert email recorded in audit log for %s (Budget: %s)", recipient_email, budget_name)
     return True, "Mock Mode (SMTP_HOST not set)"
 

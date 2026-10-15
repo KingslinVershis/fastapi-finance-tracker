@@ -39,7 +39,6 @@ class BudgetResponse(BudgetBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    # Authoritative Python Analytics
     current_amount: Decimal = Decimal("0.00")
     percentage_used: float = 0.0
     remaining_amount: Decimal = Decimal("0.00")

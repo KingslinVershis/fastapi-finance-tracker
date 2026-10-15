@@ -10,7 +10,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
-    type = Column(String(20), nullable=False, index=True)  # "income" or "expense"
+    type = Column(String(20), nullable=False, index=True)
     amount = Column(Numeric(precision=12, scale=2), nullable=False)
     description = Column(String(500), nullable=True)
     transaction_date = Column(DateTime(timezone=True), nullable=False, index=True)

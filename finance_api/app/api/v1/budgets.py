@@ -58,10 +58,7 @@ def create_new_budget(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    # Evaluate alerts in background immediately upon budget creation
     background_tasks.add_task(evaluate_and_trigger_alerts_background, current_user.id)
-
-    # Return with current analytics calculated for this budget
     return get_single_budget_with_analytics(db, budget=budget)
 
 

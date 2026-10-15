@@ -7,7 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["SMTP_HOST"] = ""
 
+from app.core.config import settings
+
+settings.SMTP_HOST = ""
 from app.core.dependencies import get_db
 from app.database.session import Base
 from app.main import app

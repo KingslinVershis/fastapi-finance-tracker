@@ -136,7 +136,6 @@ def get_budgets_with_analytics(db: Session, user_id: int) -> List[BudgetResponse
     if not budgets:
         return []
 
-    # Single aggregation query for all user transactions in current month
     aggregated_spends = (
         db.query(
             Transaction.type,
@@ -152,7 +151,6 @@ def get_budgets_with_analytics(db: Session, user_id: int) -> List[BudgetResponse
         .all()
     )
 
-    # In-memory index of volumes by (type, category_id) and overall by type
     volume_by_category: Dict[tuple, Decimal] = {}
     volume_by_type: Dict[str, Decimal] = {"expense": Decimal("0.00"), "income": Decimal("0.00")}
 
@@ -238,7 +236,6 @@ def get_budget_overview(db: Session, user_id: int) -> BudgetOverviewResponse:
 
 
 def create_budget(db: Session, user_id: int, budget_in: BudgetCreate) -> Budget:
-    # If category specified, verify existence and type match
     if budget_in.category_id is not None:
         cat = (
             db.query(Category)
@@ -348,7 +345,6 @@ def evaluate_and_trigger_alerts_background(
                 .all()
             )
 
-        # Batch-aggregate user's transactions for the current calendar month
         aggregated_spends = (
             db.query(
                 Transaction.type,
@@ -377,7 +373,6 @@ def evaluate_and_trigger_alerts_background(
             cat_name = b.category.name if b.category else None
 
             if b.period == "per_transaction":
-                # Check specific new transactions exceeding threshold
                 for tx in new_txs:
                     if tx.type != b.type:
                         continue
@@ -429,7 +424,6 @@ def evaluate_and_trigger_alerts_background(
                         triggered_count += 1
 
             else:
-                # Monthly rolling cycle resolved in O(1) from batch aggregation
                 if b.category_id is not None:
                     current_vol = volume_by_category.get((b.type, b.category_id), Decimal("0.00"))
                 else:
@@ -438,7 +432,6 @@ def evaluate_and_trigger_alerts_background(
                 if current_vol >= threshold and threshold > Decimal("0.00"):
                     exceeded = max(current_vol - threshold, Decimal("0.00"))
 
-                    # Check if already notified this month with same or greater volume
                     last_notif = (
                         db.query(AlertNotification)
                         .filter(
@@ -533,7 +526,7 @@ def trigger_test_alert(db: Session, user_id: int, budget: Budget) -> bool:
     recipient = budget.alert_email or (user.email if user else "user@financeintel.com")
     cat_name = budget.category.name if budget.category else None
     threshold = Decimal(str(budget.threshold_amount))
-    simulated_current = threshold * Decimal("1.15")  # 115% for test
+    simulated_current = threshold * Decimal("1.15")
     exceeded = simulated_current - threshold
 
     success, delivery_note = send_threshold_alert_email(
