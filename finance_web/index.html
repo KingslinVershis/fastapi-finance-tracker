@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h12'/><path d='M6 8h12'/><path d='m6 13 8.5 8'/><path d='M6 13h3'/><path d='M9 13c6.667 0 6.667-10 0-10'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Intel | Portfolio Intelligence &amp; Executive Cashflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            colors: {
+              obsidian: {
+                950: '#070a10',
+                900: '#0b0f19',
+                850: '#0f1422',
+                800: '#141b2d',
+                750: '#1a2238',
+                700: '#222d47',
+              },
+              brand: {
+                electric: '#2563eb',
+                cobalt: '#3b82f6',
+                cyan: '#06b6d4',
+                emerald: '#10b981',
+                mint: '#34d399',
+                rose: '#f43f5e',
+                violet: '#8b5cf6',
+              },
+            },
+            boxShadow: {
+              'glow-blue': '0 0 25px -5px rgba(59, 130, 246, 0.35)',
+              'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.35)',
+              'card-glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-obsidian-950 text-slate-100 antialiased bg-grid-mesh selection:bg-brand-cobalt selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+.card-title.with-icon.expense {
+  color: #fb7185 !important;
+}
+.card-title.with-icon.income {
+  color: #34d399 !important;
+}
+
+.cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cat-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.15s ease;
+}
+.cat-item-row .cat-item-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.cat-item-row .cat-item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+.cat-item-row .cat-lock-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.cat-item-row .cat-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Modal */
+.cat-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.cat-modal-header .cat-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cat-admin-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+.cat-admin-checkbox-label .cat-admin-shield {
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.cat-modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.cat-modal-footer .btn {
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .cat-item-row {
+    padding: 0.65rem 0.85rem;
+  }
+}

@@ -1,0 +1,99 @@
+.card.summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 155px;
+  padding: 1.25rem 1.35rem;
+}
+
+.summary-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.summary-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.summary-card-icon.green {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.summary-card-icon.red {
+  background-color: rgba(244, 63, 94, 0.1);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+.summary-card-icon.blue {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.summary-card-icon.purple {
+  background-color: rgba(168, 85, 247, 0.1);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.summary-amount-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.summary-amount-row .summary-amount-prefix {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+.summary-amount-int {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.summary-amount-row .summary-amount-dec {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-left: 1px;
+}
+.summary-amount-row .summary-amount-suffix {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10b981;
+  margin-left: 2px;
+}
+
+.summary-subtitle {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .card.summary-card {
+    min-height: auto;
+    padding: 1.05rem 1.15rem;
+  }
+  .summary-amount-int {
+    font-size: 1.55rem;
+  }
+}

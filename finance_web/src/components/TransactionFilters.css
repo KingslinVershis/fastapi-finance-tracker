@@ -1,0 +1,27 @@
+.card.tx-filters-card {
+  margin-bottom: 1.5rem;
+  padding: 1.15rem 1.25rem;
+  position: relative;
+  z-index: 25;
+  overflow: visible;
+}
+
+.tx-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+}
+.tx-filters-grid .tx-filters-search-col {
+  grid-column: span 2;
+}
+.tx-filters-grid .btn.tx-filters-reset-btn {
+  width: 100%;
+  padding: 0.58rem 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .tx-filters-grid .tx-filters-search-col {
+    grid-column: span 1;
+  }
+}

@@ -1,0 +1,98 @@
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.custom-select-trigger:hover:not(:disabled) {
+  border-color: #3b82f6;
+}
+.custom-select-trigger.is-open {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+.custom-select-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.custom-select-trigger .custom-select-chevron {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+.custom-select-trigger.is-open .custom-select-chevron {
+  transform: rotate(180deg);
+}
+
+.custom-select-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 170px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  background-color: var(--bg-popover);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 34px -8px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.custom-select-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.custom-select-option:hover {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: var(--text-primary);
+}
+.custom-select-option.is-selected {
+  background-color: rgba(37, 99, 235, 0.18);
+  color: #3b82f6;
+  font-weight: 600;
+}
+.custom-select-option .custom-select-check {
+  flex-shrink: 0;
+  color: #3b82f6;
+}

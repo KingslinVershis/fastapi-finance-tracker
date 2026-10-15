@@ -1,0 +1,74 @@
+.admin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-title-row .admin-shield-icon {
+  color: #c084fc;
+}
+
+.admin-kpi-grid {
+  margin-bottom: 1.75rem;
+}
+
+.admin-search-box {
+  min-width: 240px;
+}
+
+.admin-user-name-row {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-user-name-row .admin-self-tag {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background-color: #1e3a8a;
+  color: #93c5fd;
+}
+
+.admin-user-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.badge.admin-role-badge.is-admin {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+.badge.admin-role-badge.is-user {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.admin-actions-wrap {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.admin-actions-wrap .btn.admin-action-btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+}
+.admin-actions-wrap .btn.admin-action-btn.suspend {
+  color: #fbbf24 !important;
+}
+.admin-actions-wrap .btn.admin-action-btn.activate {
+  color: #34d399 !important;
+}
+.admin-actions-wrap .btn.admin-action-btn.delete {
+  padding: 0.3rem 0.5rem;
+  color: #f87171 !important;
+}
+
+@media (max-width: 640px) {
+  .admin-search-box {
+    min-width: 100%;
+    width: 100%;
+  }
+}

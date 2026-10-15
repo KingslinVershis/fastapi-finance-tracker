@@ -1,0 +1,4 @@
+[tool.pyright]
+include = ["finance_api"]
+extraPaths = ["finance_api"]
+

@@ -1,0 +1,107 @@
+.chart-empty-state,
+.doughnut-empty-state {
+  height: 265px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+}
+
+.chart-bar-container {
+  height: 270px;
+  width: 100%;
+}
+
+.doughnut-ring-wrapper {
+  height: 215px;
+  width: 100%;
+  position: relative;
+}
+
+.doughnut-center-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.doughnut-center-overlay .doughnut-center-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.doughnut-center-overlay .doughnut-center-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-top: 0.1rem;
+}
+.doughnut-center-overlay .doughnut-center-saved {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-top: 0.15rem;
+}
+
+.doughnut-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 1.15rem;
+}
+
+.doughnut-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.6rem;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+}
+.doughnut-legend-item .doughnut-legend-left,
+.doughnut-legend-item .doughnut-legend-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.doughnut-legend-item .doughnut-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.doughnut-legend-item .doughnut-legend-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.doughnut-legend-item .doughnut-legend-amt {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.doughnut-legend-pct {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.35rem;
+}
+.doughnut-legend-pct.primary {
+  background-color: rgba(59, 130, 246, 0.14);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+.doughnut-legend-pct.secondary {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
