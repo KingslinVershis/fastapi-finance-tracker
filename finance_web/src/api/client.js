@@ -1,5 +1,56 @@
-const RAW_BASE = import.meta.env.VITE_API_URL || '';
+const RAW_BASE = import.meta?.env?.VITE_API_URL || '';
 const API_BASE = RAW_BASE ? `${RAW_BASE.replace(/\/$/, '')}/api/v1` : '/api/v1';
+
+export const extractErrorMessage = (data, fallback = 'API Request failed') => {
+  if (!data) return fallback;
+  if (typeof data === 'string') return data;
+
+  if (typeof data.detail === 'string') {
+    return data.detail;
+  }
+
+  if (Array.isArray(data.detail)) {
+    const msgs = data.detail
+      .map((item) => {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        if (item.msg) {
+          const field = Array.isArray(item.loc)
+            ? item.loc.filter((part) => part !== 'body').join('.')
+            : '';
+          return field ? `${field}: ${item.msg}` : item.msg;
+        }
+        return JSON.stringify(item);
+      })
+      .filter(Boolean);
+    if (msgs.length > 0) return msgs.join('; ');
+  }
+
+  if (data.detail && typeof data.detail === 'object') {
+    if (typeof data.detail.msg === 'string') return data.detail.msg;
+    if (typeof data.detail.message === 'string') return data.detail.message;
+    if (typeof data.detail.error === 'string') return data.detail.error;
+    try {
+      return JSON.stringify(data.detail);
+    } catch {
+      return fallback;
+    }
+  }
+
+  if (typeof data.message === 'string') return data.message;
+  if (typeof data.error === 'string') return data.error;
+  if (data.error && typeof data.error === 'object') {
+    if (typeof data.error.message === 'string') return data.error.message;
+  }
+
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((e) => (typeof e === 'string' ? e : e.message || JSON.stringify(e)))
+      .join('; ');
+  }
+
+  return fallback;
+};
 
 class ApiClient {
   constructor() {
@@ -75,7 +126,7 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const errorMsg = data?.detail || data?.message || (typeof data === 'string' ? data : 'API Request failed');
+      const errorMsg = extractErrorMessage(data, `Request failed with status ${response.status}`);
       const error = new Error(errorMsg);
       error.status = response.status;
       error.data = data;

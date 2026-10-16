@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, Lock, Mail, User, ArrowRight, Eye, EyeOff, Clock } from 'lucide-react';
+import { TrendingUp, Lock, Mail, User, ArrowRight, Eye, EyeOff, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { extractErrorMessage } from '../api/client';
 import './AuthPages.css';
 
 export const RegisterPage = () => {
@@ -57,11 +58,23 @@ export const RegisterPage = () => {
       await register(email, password, fullName);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Registration failed.');
+      let msg = 'Registration failed.';
+      if (typeof err === 'string' && err !== '[object Object]') {
+        msg = err;
+      } else if (err?.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+        msg = err.message;
+      } else if (err?.data) {
+        msg = extractErrorMessage(err.data, msg);
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  const isExistingAccount =
+    typeof error === 'string' &&
+    (error.toLowerCase().includes('already exists') || error.toLowerCase().includes('duplicate'));
 
   return (
     <div className="auth-page-wrapper">
@@ -74,7 +87,25 @@ export const RegisterPage = () => {
           <p className="auth-brand-subtitle">Start tracking your personal finance analytics</p>
         </div>
 
-        {error && <div className="alert-banner error">{error}</div>}
+        {error && (
+          <div className="alert-banner error" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{typeof error === 'string' ? error : 'Registration failed.'}</span>
+            </div>
+            {isExistingAccount && (
+              <div style={{ marginTop: '0.25rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(239, 68, 68, 0.25)', fontSize: '0.8rem' }}>
+                Account already registered.{' '}
+                <Link
+                  to={`/login?email=${encodeURIComponent(email)}`}
+                  style={{ color: '#60a5fa', fontWeight: 600, textDecoration: 'underline' }}
+                >
+                  Sign in to your account &rarr;
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
 
         {coldStartNotice && (
           <div className="alert-banner info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.12)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.25)', marginBottom: '1rem' }}>

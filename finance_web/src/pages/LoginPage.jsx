@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { TrendingUp, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { extractErrorMessage } from '../api/client';
 import './AuthPages.css';
 
 export const LoginPage = () => {
@@ -13,6 +14,15 @@ export const LoginPage = () => {
   const [coldStartNotice, setColdStartNotice] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const emailParam = params.get('email');
+    if (emailParam && !email) {
+      setEmail(emailParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     let timer;
@@ -35,13 +45,26 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Login failed. Please verify credentials.');
+      let msg = 'Login failed. Please verify credentials.';
+      if (typeof err === 'string' && err !== '[object Object]') {
+        msg = err;
+      } else if (err?.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+        msg = err.message;
+      } else if (err?.data) {
+        msg = extractErrorMessage(err.data, msg);
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const isUnregistered = error && (error.toLowerCase().includes('no account') || error.toLowerCase().includes('register first'));
+  const isUnregistered =
+    typeof error === 'string' &&
+    (error.toLowerCase().includes('no account') ||
+      error.toLowerCase().includes('register first') ||
+      error.toLowerCase().includes('not found') ||
+      error.toLowerCase().includes('invalid email or password'));
 
   return (
     <div className="auth-page-wrapper">
@@ -58,7 +81,7 @@ export const LoginPage = () => {
           <div className="alert-banner error" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertCircle size={16} style={{ flexShrink: 0 }} />
-              <span>{error}</span>
+              <span>{typeof error === 'string' ? error : 'Login failed. Please verify credentials.'}</span>
             </div>
             {isUnregistered && (
               <div style={{ marginTop: '0.25rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(239, 68, 68, 0.25)', fontSize: '0.8rem' }}>
