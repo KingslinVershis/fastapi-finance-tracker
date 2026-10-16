@@ -15,6 +15,8 @@ export const TransactionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [coldStartNotice, setColdStartNotice] = useState(false);
 
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -81,6 +83,16 @@ export const TransactionsPage = () => {
   };
 
   useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => setColdStartNotice(true), 3500);
+    } else {
+      setColdStartNotice(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
     fetchCategories();
   }, []);
 
@@ -114,10 +126,14 @@ export const TransactionsPage = () => {
   };
 
   const handleExport = async () => {
+    setExporting(true);
+    setError('');
     try {
       await api.exportTransactionsCsv(buildFilterParams());
     } catch (err) {
       setError(err.message || 'Failed to export transactions.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -169,9 +185,14 @@ export const TransactionsPage = () => {
             <Upload size={16} />
             <span>Import</span>
           </button>
-          <button onClick={handleExport} className="btn btn-secondary" title="Export CSV">
+          <button
+            onClick={handleExport}
+            disabled={exporting || total === 0}
+            className="btn btn-secondary"
+            title={total === 0 ? 'No transactions to export' : 'Export transactions as CSV'}
+          >
             <Download size={16} />
-            <span>Export</span>
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
           </button>
           <button
             onClick={() => {
@@ -207,6 +228,13 @@ export const TransactionsPage = () => {
         </div>
       )}
 
+      {coldStartNotice && loading && (
+        <div className="alert-banner info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.12)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+          <RefreshCw size={14} className="animate-spin" />
+          <span>Render backend server is waking up (20-30s on free tier). Please wait...</span>
+        </div>
+      )}
+
       <TransactionFilters
         filters={filters}
         onChange={setFilters}
@@ -227,13 +255,21 @@ export const TransactionsPage = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               showActions={true}
+              hasActiveFilters={Boolean(filters.type || filters.category_id || filters.search || filters.start_date || filters.end_date)}
+              onResetFilters={handleResetFilters}
+              onAddTransaction={() => {
+                setSelectedTx(null);
+                setIsFormOpen(true);
+              }}
             />
-            <Pagination
-              currentPage={filters.page}
-              totalPages={totalPages}
-              totalItems={total}
-              onPageChange={(p) => setFilters({ ...filters, page: p })}
-            />
+            {total > 0 && (
+              <Pagination
+                currentPage={filters.page}
+                totalPages={totalPages}
+                totalItems={total}
+                onPageChange={(p) => setFilters({ ...filters, page: p })}
+              />
+            )}
           </>
         )}
       </div>

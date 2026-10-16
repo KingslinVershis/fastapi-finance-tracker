@@ -5,14 +5,15 @@ import TransactionForm from '../components/TransactionForm';
 import ImportTransactionsModal from '../components/ImportTransactionsModal';
 import { MobileMenuButton } from '../components/Sidebar';
 import { ThemeToggleButton } from '../context/ThemeContext';
+import { useCurrency } from '../context/CurrencyContext';
 
-const splitCurrency = (val) => {
+const splitCurrency = (val, locale = 'en-IN') => {
   const num = Number(val || 0);
   const abs = Math.abs(num);
   const [intPart, decPart] = abs.toFixed(2).split('.');
   return {
     sign: num < 0 ? '-' : '',
-    intFormatted: Number(intPart).toLocaleString('en-IN'),
+    intFormatted: Number(intPart).toLocaleString(locale),
     decPart,
   };
 };
@@ -126,6 +127,9 @@ const getLedgerRowVisual = (tx) => {
 };
 
 export const DashboardPage = () => {
+  const { symbol, activeCurrency, currency, setCurrency, currencies } = useCurrency();
+  const formatAmt = (val, opts = {}) => Number(val || 0).toLocaleString(activeCurrency.locale, opts);
+
   const [dashboardData, setDashboardData] = useState(null);
   const [monthlyReport, setMonthlyReport] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -194,9 +198,9 @@ export const DashboardPage = () => {
   const monthlySavings = Number(dashboardData?.monthly_savings ?? 0);
   const monthlySavingsRate = Number(dashboardData?.monthly_savings_rate ?? 0);
 
-  const incParts = splitCurrency(totalIncome);
-  const expParts = splitCurrency(totalExpenses);
-  const netParts = splitCurrency(netBalance);
+  const incParts = splitCurrency(totalIncome, activeCurrency.locale);
+  const expParts = splitCurrency(totalExpenses, activeCurrency.locale);
+  const netParts = splitCurrency(netBalance, activeCurrency.locale);
 
   // Python-computed KPI percentages & status metrics
   const inflowSharePct = Number(dashboardData?.inflow_share_percentage ?? 0).toFixed(1);
@@ -373,6 +377,21 @@ export const DashboardPage = () => {
               <span className="hidden sm:inline">Export</span>
             </button>
 
+            {/* Currency Switcher */}
+            <button
+              type="button"
+              onClick={() => {
+                const keys = Object.keys(currencies);
+                const nextIdx = (keys.indexOf(currency) + 1) % keys.length;
+                setCurrency(keys[nextIdx]);
+              }}
+              title={`Active Currency: ${currency} (${symbol}). Click to switch.`}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-800 hover:bg-obsidian-700 text-slate-200 border border-white/[0.08] transition-colors"
+            >
+              <span className="text-blue-400 font-bold">{symbol}</span>
+              <span>{currency}</span>
+            </button>
+
             {/* Theme Toggle Switch */}
             <ThemeToggleButton />
 
@@ -432,7 +451,7 @@ export const DashboardPage = () => {
               </div>
               <div className="space-y-2">
                 <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-1">
-                  <span className="text-xl font-normal text-slate-400">₹</span>
+                  <span className="text-xl font-normal text-slate-400">{symbol}</span>
                   {incParts.intFormatted}
                   <span className="text-lg font-normal text-slate-400">.{incParts.decPart}</span>
                 </div>
@@ -448,14 +467,14 @@ export const DashboardPage = () => {
                     {inflowSharePct}% of cashflow
                   </span>
                   <span className="text-slate-400 font-medium">
-                    This Month: ₹{monthlyIncome.toLocaleString('en-IN')}
+                    This Month: {symbol}{formatAmt(monthlyIncome)}
                   </span>
                 </div>
               </div>
             </div>
             <div className="mt-5 pt-3.5 border-t border-white/[0.05] flex items-center justify-between text-xs text-slate-400">
               <span className="truncate">
-                Retained: ₹{retainedIncome.toLocaleString('en-IN')}
+                Retained: {symbol}{formatAmt(retainedIncome)}
               </span>
               <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> {retainedPct}% retained
@@ -486,7 +505,7 @@ export const DashboardPage = () => {
               </div>
               <div className="space-y-2">
                 <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-1">
-                  <span className="text-xl font-normal text-slate-400">₹</span>
+                  <span className="text-xl font-normal text-slate-400">{symbol}</span>
                   {expParts.intFormatted}
                   <span className="text-lg font-normal text-slate-400">.{expParts.decPart}</span>
                 </div>
@@ -500,7 +519,7 @@ export const DashboardPage = () => {
             </div>
             <div className="mt-5 pt-3.5 border-t border-white/[0.05]">
               <div className="flex justify-between text-xs mb-1.5 text-slate-400">
-                <span>Income Limit: ₹{totalIncome.toLocaleString('en-IN')}</span>
+                <span>Income Limit: {symbol}{formatAmt(totalIncome)}</span>
                 <span className="font-mono text-slate-300 font-medium">{capUtilized}% utilized</span>
               </div>
               <div className="w-full h-1.5 bg-obsidian-750 rounded-full overflow-hidden">
@@ -535,14 +554,14 @@ export const DashboardPage = () => {
               </div>
               <div className="space-y-2">
                 <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-1">
-                  <span className="text-xl font-normal text-slate-400">{netParts.sign}₹</span>
+                  <span className="text-xl font-normal text-slate-400">{netParts.sign}{symbol}</span>
                   {netParts.intFormatted}
                   <span className="text-lg font-normal text-slate-400">.{netParts.decPart}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-0.5 text-xs">
                   <span className="font-medium text-slate-400">Monthly Net:</span>
                   <span className="font-semibold text-brand-cobalt font-mono">
-                    ₹{monthlySavings.toLocaleString('en-IN')}
+                    {symbol}{formatAmt(monthlySavings)}
                   </span>
                 </div>
               </div>
@@ -677,7 +696,7 @@ export const DashboardPage = () => {
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] sm:text-[11px] font-mono text-slate-500 pb-8">
                 {yAxisSteps.map((stepVal, idx) => (
                   <div key={idx} className="flex items-center w-full">
-                    <span className="w-12 sm:w-16 truncate">₹{Number(stepVal).toLocaleString('en-IN')}</span>
+                    <span className="w-12 sm:w-16 truncate">{symbol}{formatAmt(stepVal)}</span>
                     <div
                       className={`flex-1 border-b ${
                         idx === yAxisSteps.length - 1 ? 'border-white/[0.08]' : 'border-white/[0.05]'
@@ -709,10 +728,10 @@ export const DashboardPage = () => {
                             {label.split(' ')[0]} Performance
                           </div>
                           <div className="text-[10px] sm:text-[11px] font-mono text-emerald-400 font-bold">
-                            +₹{incVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            +{symbol}{formatAmt(incVal, { minimumFractionDigits: 2 })}
                           </div>
                           <div className="text-[9px] sm:text-[10px] font-mono text-rose-400">
-                            -₹{expVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            -{symbol}{formatAmt(expVal, { minimumFractionDigits: 2 })}
                           </div>
                         </div>
                         <div className="flex items-end gap-1 sm:gap-2 h-full">
@@ -804,7 +823,7 @@ export const DashboardPage = () => {
                 <p className="text-xs text-slate-400 mt-0.5">Proportional outflow allocation</p>
               </div>
               <span className="text-xs font-mono font-semibold text-slate-300 px-2 py-1 rounded bg-obsidian-800 border border-white/[0.08]">
-                ₹{totalExpenses.toLocaleString('en-IN')} Total
+                {symbol}{formatAmt(totalExpenses)} Total
               </span>
             </div>
 
@@ -845,7 +864,7 @@ export const DashboardPage = () => {
                   Expensed
                 </span>
                 <span className="text-2xl font-bold font-mono text-white tracking-tight">
-                  ₹{totalExpenses.toLocaleString('en-IN')}
+                  {symbol}{formatAmt(totalExpenses)}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-medium">
                   {roundedSavingsRate}% Saved
@@ -877,7 +896,7 @@ export const DashboardPage = () => {
                       </div>
                       <div className="flex items-center gap-3 text-xs font-mono">
                         <span className="font-bold text-white">
-                          ₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {symbol}{formatAmt(amt, { minimumFractionDigits: 2 })}
                         </span>
                         <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${vis.pillClass}`}>
                           {pct}%
@@ -945,7 +964,7 @@ export const DashboardPage = () => {
                           </div>
                           <div className="text-right">
                             <span className="font-mono font-bold text-white">
-                              ₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              {symbol}{formatAmt(amt, { minimumFractionDigits: 2 })}
                             </span>
                             <span className="text-slate-400 text-[11px] ml-1">
                               ({pct.toFixed(2)}%)
@@ -960,7 +979,7 @@ export const DashboardPage = () => {
                           ></div>
                         </div>
                         <div className="flex justify-between text-[11px] text-slate-400">
-                          <span>Of ₹{totalExpenses.toLocaleString('en-IN')} total expenses</span>
+                          <span>Of {symbol}{formatAmt(totalExpenses)} total expenses</span>
                           <span className="text-emerald-400">{incomeShareLabel}</span>
                         </div>
                       </div>
@@ -1004,7 +1023,7 @@ export const DashboardPage = () => {
                         <strong className="text-brand-emerald">{savingsRate}%</strong>. You have
                         surplus cash of{' '}
                         <strong className="text-white">
-                          ₹{retainedIncome.toLocaleString('en-IN')}
+                          {symbol}{formatAmt(retainedIncome)}
                         </strong>{' '}
                         ready for liquid mutual funds or short-term yield deployment.
                       </>
@@ -1070,7 +1089,7 @@ export const DashboardPage = () => {
                         const isIncome = tx.type === 'income';
                         const vis = getLedgerRowVisual(tx);
                         const formattedDate = tx.transaction_date
-                          ? new Date(tx.transaction_date).toLocaleDateString('en-IN', {
+                          ? new Date(tx.transaction_date).toLocaleDateString(activeCurrency.locale, {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric',
@@ -1148,8 +1167,8 @@ export const DashboardPage = () => {
                                 isIncome ? 'text-emerald-400' : 'text-rose-400'
                               }`}
                             >
-                              {isIncome ? '+' : '-'}₹
-                              {Number(tx.amount).toLocaleString('en-IN', {
+                              {isIncome ? '+' : '-'}{symbol}
+                              {formatAmt(tx.amount, {
                                 minimumFractionDigits: 2,
                               })}
                             </td>
@@ -1169,8 +1188,8 @@ export const DashboardPage = () => {
                 for {currentMonthLong}
               </span>
               <span className="font-mono text-xs text-brand-cobalt font-semibold">
-                Net Cleared: {netBalance >= 0 ? '+' : '-'}₹
-                {Math.abs(netBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                Net Cleared: {netBalance >= 0 ? '+' : '-'}{symbol}
+                {formatAmt(Math.abs(netBalance), { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>

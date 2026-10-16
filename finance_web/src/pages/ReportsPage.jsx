@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, Wallet, Percent } from 'lucide-react';
 import api from '../api/client';
+import { useCurrency } from '../context/CurrencyContext';
 import SummaryCard from '../components/SummaryCard';
 import IncomeExpenseChart from '../components/IncomeExpenseChart';
 import SpendingChart from '../components/SpendingChart';
@@ -8,6 +9,8 @@ import CustomSelect from '../components/CustomSelect';
 import './ReportsPage.css';
 
 export const ReportsPage = () => {
+  const { symbol, activeCurrency } = useCurrency();
+  const formatAmt = (val, opts = {}) => Number(val || 0).toLocaleString(activeCurrency.locale, opts);
   const [monthsCount, setMonthsCount] = useState(6);
   const [monthlyData, setMonthlyData] = useState(null);
   const [categoryData, setCategoryData] = useState(null);
@@ -134,17 +137,18 @@ export const ReportsPage = () => {
                 <tr key={m.month}>
                   <td className="cell-primary">{m.month_name}</td>
                   <td className="col-right val-income">
-                    ₹{Number(m.income).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {symbol}{formatAmt(m.income, { minimumFractionDigits: 2 })}
                   </td>
                   <td className="col-right val-expense">
-                    ₹{Number(m.expenses).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {symbol}{formatAmt(m.expenses, { minimumFractionDigits: 2 })}
                   </td>
                   <td
                     className={`col-right ${
                       Number(m.net_savings) >= 0 ? 'reports-net-pos' : 'val-expense'
                     }`}
                   >
-                    ₹{Number(m.net_savings).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {Number(m.net_savings) < 0 ? '-' : ''}{symbol}
+                    {formatAmt(Math.abs(m.net_savings), { minimumFractionDigits: 2 })}
                   </td>
                   <td className="col-right reports-rate">{m.savings_rate}%</td>
                 </tr>
@@ -160,8 +164,8 @@ export const ReportsPage = () => {
           <div>
             <h3 className="card-title">Categorical Analytics Breakdown</h3>
             <p className="card-subtitle">
-              Total Volume: ₹
-              {Number(categoryData?.total_amount || 0).toLocaleString('en-IN', {
+              Total Volume: {symbol}
+              {formatAmt(categoryData?.total_amount, {
                 minimumFractionDigits: 2,
               })}
             </p>
@@ -238,7 +242,7 @@ export const ReportsPage = () => {
                         cat.type === 'income' ? 'val-income' : 'val-expense'
                       }`}
                     >
-                      ₹{Number(cat.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {symbol}{formatAmt(cat.amount, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="col-right">{cat.percentage}%</td>
                   </tr>

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, get_db
 from app.core.rate_limiter import enforce_login_rate_limit
+from app.core.security import verify_password
 from app.models.user import User
 from app.schemas.auth import LoginRequest, MessageResponse, RefreshTokenRequest, Token
 from app.schemas.user import UserCreate
@@ -38,11 +39,17 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
     response.headers["X-RateLimit-Limit"] = str(limit)
     response.headers["X-RateLimit-Remaining"] = str(remaining)
 
-    user = authenticate_user(db, email=login_data.email, password=login_data.password)
+    user = get_user_by_email(db, email=login_data.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password.",
+            detail="No account found with this email. Please register first.",
+            headers={"WWW-Authenticate": "Bearer", **rate_headers},
+        )
+    if not verify_password(login_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password. Please try again.",
             headers={"WWW-Authenticate": "Bearer", **rate_headers},
         )
     if not user.is_active:
@@ -69,12 +76,24 @@ def login_form(
     response.headers["X-RateLimit-Limit"] = str(limit)
     response.headers["X-RateLimit-Remaining"] = str(remaining)
 
-    user = authenticate_user(db, email=form_data.username, password=form_data.password)
+    user = get_user_by_email(db, email=form_data.username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password.",
+            detail="No account found with this username/email. Please register first.",
             headers={"WWW-Authenticate": "Bearer", **rate_headers},
+        )
+    if not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password. Please try again.",
+            headers={"WWW-Authenticate": "Bearer", **rate_headers},
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Account is currently inactive.",
+            headers=rate_headers,
         )
     return create_user_tokens(user.id)
 

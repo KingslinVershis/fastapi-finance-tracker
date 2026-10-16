@@ -20,11 +20,14 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
 import CustomSelect from '../components/CustomSelect';
 import './BudgetsPage.css';
 
 export const BudgetsPage = () => {
   const { user } = useAuth();
+  const { symbol, activeCurrency } = useCurrency();
+  const formatAmt = (val, opts = {}) => Number(val || 0).toLocaleString(activeCurrency.locale, opts);
   const [overview, setOverview] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -322,7 +325,7 @@ export const BudgetsPage = () => {
               <TrendingDown size={18} />
             </div>
           </div>
-          <div className="kpi-value">₹{Number(overview?.total_budgeted_expense || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+          <div className="kpi-value">{symbol}{formatAmt(overview?.total_budgeted_expense, { minimumFractionDigits: 2 })}</div>
           <div className="kpi-subtext">Sum of active expense caps</div>
         </div>
 
@@ -333,7 +336,7 @@ export const BudgetsPage = () => {
               <TrendingUp size={18} />
             </div>
           </div>
-          <div className="kpi-value">₹{Number(overview?.total_spent_in_budgeted || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+          <div className="kpi-value">{symbol}{formatAmt(overview?.total_spent_in_budgeted, { minimumFractionDigits: 2 })}</div>
           <div className="kpi-subtext">Recorded current period spend</div>
         </div>
 
@@ -445,19 +448,19 @@ export const BudgetsPage = () => {
                       <div className="metric-col">
                         <div className="metric-label">Actual</div>
                         <div className="metric-val text-slate-200">
-                          ₹{Number(b.current_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {symbol}{formatAmt(b.current_amount, { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                       <div className="metric-col">
                         <div className="metric-label">Threshold</div>
                         <div className="metric-val text-indigo-300">
-                          ₹{Number(b.threshold_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {symbol}{formatAmt(b.threshold_amount, { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                       <div className="metric-col">
                         <div className="metric-label">Remaining</div>
                         <div className="metric-val text-emerald-400">
-                          ₹{Number(b.remaining_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {symbol}{formatAmt(b.remaining_amount, { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                     </div>
@@ -563,17 +566,17 @@ export const BudgetsPage = () => {
                     </td>
                     <td>
                       <span className="font-mono text-slate-300">
-                        ₹{Number(n.threshold_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {symbol}{formatAmt(n.threshold_amount, { minimumFractionDigits: 2 })}
                       </span>
                     </td>
                     <td>
                       <span className="font-mono text-rose-400 font-semibold">
-                        ₹{Number(n.current_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {symbol}{formatAmt(n.current_amount, { minimumFractionDigits: 2 })}
                       </span>
                     </td>
                     <td>
                       <span className="font-mono text-rose-400">
-                        +₹{Number(n.exceeded_by || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        +{symbol}{formatAmt(n.exceeded_by, { minimumFractionDigits: 2 })}
                       </span>
                     </td>
                     <td>
@@ -686,7 +689,7 @@ export const BudgetsPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Threshold Amount (₹) *</label>
+                  <label className="form-label">Threshold Amount ({symbol}) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -780,7 +783,7 @@ export const BudgetsPage = () => {
                 <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <span className="text-slate-400 block mb-0.5">Triggered Spending</span>
                   <span className="text-rose-400 font-semibold font-mono">
-                    ₹{Number(selectedNotifForError.current_amount || 0).toFixed(2)} / ₹{Number(selectedNotifForError.threshold_amount || 0).toFixed(2)}
+                    {symbol}{formatAmt(selectedNotifForError.current_amount, { minimumFractionDigits: 2 })} / {symbol}{formatAmt(selectedNotifForError.threshold_amount, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>

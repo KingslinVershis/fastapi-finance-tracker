@@ -10,7 +10,9 @@ import {
   Utensils,
   Receipt,
   CreditCard,
+  Plus,
 } from 'lucide-react';
+import { useCurrency } from '../context/CurrencyContext';
 import './TransactionTable.css';
 
 const getLedgerMeta = (tx) => {
@@ -64,15 +66,52 @@ const getLedgerMeta = (tx) => {
   };
 };
 
-export const TransactionTable = ({ transactions = [], onEdit, onDelete, showActions = true }) => {
+export const TransactionTable = ({
+  transactions = [],
+  onEdit,
+  onDelete,
+  showActions = true,
+  hasActiveFilters = false,
+  onResetFilters,
+  onAddTransaction,
+}) => {
+  const { symbol, activeCurrency } = useCurrency();
+
   if (!transactions || transactions.length === 0) {
-    return <div className="tx-empty-state">No transactions found.</div>;
+    return (
+      <div className="tx-empty-state-card" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+          <Receipt size={28} />
+        </div>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+          {hasActiveFilters ? 'No matching transactions found' : 'No transactions recorded yet'}
+        </h3>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: '440px', margin: '0 auto 1.5rem auto', lineHeight: 1.5 }}>
+          {hasActiveFilters
+            ? 'No records match your selected filters. Try adjusting your search query, category, or date range.'
+            : 'Start building your financial ledger by recording your income credits or daily expense purchases.'}
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {hasActiveFilters && onResetFilters && (
+            <button type="button" onClick={onResetFilters} className="btn btn-secondary">
+              Reset Filters
+            </button>
+          )}
+          {onAddTransaction && (
+            <button type="button" onClick={onAddTransaction} className="btn btn-primary">
+              <Plus size={15} />
+              <span>Add Transaction</span>
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   const formatDate = (dateStr) => {
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('en-IN', {
+      return d.toLocaleDateString(activeCurrency.locale, {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -129,8 +168,8 @@ export const TransactionTable = ({ transactions = [], onEdit, onDelete, showActi
                     isIncome ? 'val-income' : 'val-expense'
                   }`}
                 >
-                  {isIncome ? '+' : '-'}₹
-                  {Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  {isIncome ? '+' : '-'}{symbol}
+                  {Number(tx.amount).toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })}
                 </td>
                 {showActions && (
                   <td className="col-center">

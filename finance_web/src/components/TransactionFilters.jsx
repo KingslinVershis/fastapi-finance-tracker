@@ -66,8 +66,100 @@ export const TransactionFilters = ({
     { value: 'amount_asc', label: 'Lowest Amount' },
   ];
 
+  const getPresetDates = (preset) => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (preset === 'this_month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { start_date: toYMD(start), end_date: toYMD(end) };
+    }
+    if (preset === 'last_30_days') {
+      const start = new Date();
+      start.setDate(now.getDate() - 30);
+      return { start_date: toYMD(start), end_date: toYMD(now) };
+    }
+    if (preset === 'last_month') {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { start_date: toYMD(start), end_date: toYMD(end) };
+    }
+    if (preset === 'this_year') {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear(), 11, 31);
+      return { start_date: toYMD(start), end_date: toYMD(end) };
+    }
+    return { start_date: '', end_date: '' };
+  };
+
+  const presetList = [
+    { id: 'all', label: 'All Time' },
+    { id: 'this_month', label: 'This Month' },
+    { id: 'last_30_days', label: 'Last 30 Days' },
+    { id: 'last_month', label: 'Last Month' },
+    { id: 'this_year', label: 'This Year' },
+  ];
+
+  const getCurrentPresetId = () => {
+    if (!filters.start_date && !filters.end_date) return 'all';
+    for (const p of presetList) {
+      if (p.id === 'all') continue;
+      const dates = getPresetDates(p.id);
+      if (dates.start_date === filters.start_date && dates.end_date === filters.end_date) {
+        return p.id;
+      }
+    }
+    return null;
+  };
+
+  const activePreset = getCurrentPresetId();
+
+  const handlePresetClick = (presetId) => {
+    const dates = getPresetDates(presetId);
+    onChange({
+      ...filters,
+      start_date: dates.start_date,
+      end_date: dates.end_date,
+      page: 1,
+    });
+  };
+
   return (
     <div className="card tx-filters-card">
+      {/* Date Range Presets */}
+      <div className="tx-presets-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Date Range:
+        </span>
+        {presetList.map((preset) => {
+          const isActive = activePreset === preset.id;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => handlePresetClick(preset.id)}
+              className="preset-pill-btn"
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: isActive ? 600 : 500,
+                padding: '0.25rem 0.65rem',
+                borderRadius: '0.5rem',
+                border: '1px solid',
+                borderColor: isActive ? '#3b82f6' : 'var(--border-color)',
+                backgroundColor: isActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-elevated)',
+                color: isActive ? '#60a5fa' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="tx-filters-grid">
         {/* Search */}
         <div className="tx-filters-search-col">

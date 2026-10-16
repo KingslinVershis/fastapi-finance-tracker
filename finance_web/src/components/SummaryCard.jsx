@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCurrency } from '../context/CurrencyContext';
 import './SummaryCard.css';
 
 export const SummaryCard = ({
@@ -7,24 +8,27 @@ export const SummaryCard = ({
   subtitle,
   icon: Icon,
   color = 'blue',
-  prefix = '₹',
+  prefix,
 }) => {
+  const { symbol, activeCurrency } = useCurrency();
+  const effectivePrefix = prefix !== undefined ? prefix : symbol;
+
   const renderFormattedAmount = () => {
     if (typeof amount === 'number') {
       const isNegative = amount < 0;
       const absVal = Math.abs(amount);
       const [intPart, decPart] = absVal.toFixed(2).split('.');
-      const formattedInt = Number(intPart).toLocaleString('en-IN');
+      const formattedInt = Number(intPart).toLocaleString(activeCurrency.locale);
 
       return (
         <div className="summary-amount-row">
-          {prefix && (
+          {effectivePrefix && (
             <span className="summary-amount-prefix">
-              {isNegative ? `-${prefix}` : prefix}
+              {isNegative ? `-${effectivePrefix}` : effectivePrefix}
             </span>
           )}
           <span className="summary-amount-int">
-            {!prefix && isNegative ? `-${formattedInt}` : formattedInt}
+            {!effectivePrefix && isNegative ? `-${formattedInt}` : formattedInt}
           </span>
           <span className="font-mono summary-amount-dec">.{decPart}</span>
         </div>

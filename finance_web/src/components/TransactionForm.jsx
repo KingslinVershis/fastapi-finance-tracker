@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
+import { useCurrency } from '../context/CurrencyContext';
 
 export const TransactionForm = ({
   isOpen,
@@ -8,6 +9,7 @@ export const TransactionForm = ({
   initialData = null,
   categories = [],
 }) => {
+  const { symbol } = useCurrency();
   const [type, setType] = useState('expense');
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
@@ -143,7 +145,7 @@ export const TransactionForm = ({
 
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">
-              Amount (₹)
+              Amount ({symbol})
             </label>
             <input
               type="number"

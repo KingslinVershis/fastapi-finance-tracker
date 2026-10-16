@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { TrendingUp, Lock, Mail, User, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { TrendingUp, Lock, Mail, User, ArrowRight, Eye, EyeOff, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AuthPages.css';
 
@@ -9,14 +9,39 @@ export const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [coldStartNotice, setColdStartNotice] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const emailParam = params.get('email');
+    if (emailParam && !email) {
+      setEmail(emailParam);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setColdStartNotice(true);
+      }, 3500);
+    } else {
+      setColdStartNotice(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setColdStartNotice(false);
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
@@ -51,6 +76,13 @@ export const RegisterPage = () => {
 
         {error && <div className="alert-banner error">{error}</div>}
 
+        {coldStartNotice && (
+          <div className="alert-banner info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.12)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.25)', marginBottom: '1rem' }}>
+            <Clock size={16} className="animate-spin" style={{ flexShrink: 0 }} />
+            <span>Render backend server is spinning up (20-30s on free tier). Please hold on...</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Full Name</label>
@@ -83,31 +115,49 @@ export const RegisterPage = () => {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <div className="input-icon-wrap">
+            <div className="input-icon-wrap has-toggle">
               <Lock size={16} className="input-icon" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="Min. 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="form-input"
               />
+              <button
+                type="button"
+                className="input-icon-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">Confirm Password</label>
-            <div className="input-icon-wrap">
+            <div className="input-icon-wrap has-toggle">
               <Lock size={16} className="input-icon" />
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 required
                 placeholder="Repeat password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="form-input"
               />
+              <button
+                type="button"
+                className="input-icon-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -119,7 +169,7 @@ export const RegisterPage = () => {
 
         <div className="auth-footer-text">
           Already have an account?{' '}
-          <Link to="/login" className="auth-footer-link">
+          <Link to={`/login${email ? `?email=${encodeURIComponent(email)}` : ''}`} className="auth-footer-link">
             Sign in
           </Link>
         </div>

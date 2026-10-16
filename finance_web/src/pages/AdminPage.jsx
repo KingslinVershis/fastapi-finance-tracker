@@ -14,11 +14,14 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
 import SummaryCard from '../components/SummaryCard';
 import './AdminPage.css';
 
 export const AdminPage = () => {
   const { user: currentUser } = useAuth();
+  const { symbol, activeCurrency } = useCurrency();
+  const formatAmt = (val, opts = {}) => Number(val || 0).toLocaleString(activeCurrency.locale, opts);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -219,13 +222,13 @@ export const AdminPage = () => {
                     </td>
                     <td className="col-center cell-primary">{u.transaction_count}</td>
                     <td className="col-right val-income">
-                      ₹{Number(u.total_income || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {symbol}{formatAmt(u.total_income, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="col-right val-expense">
-                      ₹{Number(u.total_expenses || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {symbol}{formatAmt(u.total_expenses, { minimumFractionDigits: 2 })}
                     </td>
                     <td>
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : '—'}
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString(activeCurrency.locale) : '—'}
                     </td>
                     <td className="col-right">
                       <div className="admin-actions-wrap">

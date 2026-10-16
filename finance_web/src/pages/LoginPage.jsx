@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { TrendingUp, Lock, Mail, ArrowRight } from 'lucide-react';
+import { TrendingUp, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AuthPages.css';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [coldStartNotice, setColdStartNotice] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setColdStartNotice(true);
+      }, 3500);
+    } else {
+      setColdStartNotice(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setColdStartNotice(false);
     setLoading(true);
     try {
       await login(email, password);
@@ -25,6 +40,8 @@ export const LoginPage = () => {
       setLoading(false);
     }
   };
+
+  const isUnregistered = error && (error.toLowerCase().includes('no account') || error.toLowerCase().includes('register first'));
 
   return (
     <div className="auth-page-wrapper">
@@ -37,7 +54,32 @@ export const LoginPage = () => {
           <p className="auth-brand-subtitle">Personal Finance Intelligence Platform</p>
         </div>
 
-        {error && <div className="alert-banner error">{error}</div>}
+        {error && (
+          <div className="alert-banner error" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+            {isUnregistered && (
+              <div style={{ marginTop: '0.25rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(239, 68, 68, 0.25)', fontSize: '0.8rem' }}>
+                New user?{' '}
+                <Link
+                  to={`/register?email=${encodeURIComponent(email)}`}
+                  style={{ color: '#60a5fa', fontWeight: 600, textDecoration: 'underline' }}
+                >
+                  Create an account with this email &rarr;
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {coldStartNotice && (
+          <div className="alert-banner info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.12)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+            <Clock size={16} className="animate-spin" style={{ flexShrink: 0 }} />
+            <span>Render backend server is spinning up (20-30s on free tier). Please hold on...</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -57,16 +99,25 @@ export const LoginPage = () => {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <div className="input-icon-wrap">
+            <div className="input-icon-wrap has-toggle">
               <Lock size={16} className="input-icon" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="form-input"
               />
+              <button
+                type="button"
+                className="input-icon-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -78,7 +129,7 @@ export const LoginPage = () => {
 
         <div className="auth-footer-text">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="auth-footer-link">
+          <Link to={`/register${email ? `?email=${encodeURIComponent(email)}` : ''}`} className="auth-footer-link">
             Create one
           </Link>
         </div>

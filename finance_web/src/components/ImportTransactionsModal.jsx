@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, X, CheckCircle2, Download, Trash2 } from 'lucide-react';
 import api from '../api/client';
+import { useCurrency } from '../context/CurrencyContext';
 import './ImportTransactionsModal.css';
 
 export const ImportTransactionsModal = ({ isOpen, onClose, onImported }) => {
+  const { symbol, activeCurrency } = useCurrency();
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -150,19 +152,19 @@ export const ImportTransactionsModal = ({ isOpen, onClose, onImported }) => {
               <div className="import-result-stat">
                 Imported Income
                 <strong>
-                  ₹
+                  {symbol}
                   {Number(
                     importResult.imported_income ?? importResult.imported_income_total ?? 0
-                  ).toLocaleString('en-IN')}
+                  ).toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })}
                 </strong>
               </div>
               <div className="import-result-stat">
                 Imported Expenses
                 <strong>
-                  ₹
+                  {symbol}
                   {Number(
                     importResult.imported_expenses ?? importResult.imported_expense_total ?? 0
-                  ).toLocaleString('en-IN')}
+                  ).toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })}
                 </strong>
               </div>
             </div>

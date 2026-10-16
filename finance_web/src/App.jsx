@@ -2,16 +2,45 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, ThemeToggleButton } from './context/ThemeContext';
+import { CurrencyProvider, useCurrency } from './context/CurrencyContext';
 import Sidebar, { MobileMenuButton } from './components/Sidebar';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import TransactionsPage from './pages/TransactionsPage';
-import CategoriesPage from './pages/CategoriesPage';
-import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
-import AdminPage from './pages/AdminPage';
-import BudgetsPage from './pages/BudgetsPage';
+
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const TransactionsPage = React.lazy(() => import('./pages/TransactionsPage'));
+const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'));
+const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const AdminPage = React.lazy(() => import('./pages/AdminPage'));
+const BudgetsPage = React.lazy(() => import('./pages/BudgetsPage'));
+
+const PageLoader = () => (
+  <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] p-8 text-slate-400">
+    <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+    <span className="text-xs font-medium tracking-wide">Loading view...</span>
+  </div>
+);
+
+const CurrencyPill = () => {
+  const { currency, symbol, setCurrency, currencies } = useCurrency();
+  const nextCurrency = () => {
+    const keys = Object.keys(currencies);
+    const nextIdx = (keys.indexOf(currency) + 1) % keys.length;
+    setCurrency(keys[nextIdx]);
+  };
+  return (
+    <button
+      type="button"
+      onClick={nextCurrency}
+      title={`Active Currency: ${currency} (${symbol}). Click to switch.`}
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-obsidian-800 hover:bg-obsidian-700 text-slate-200 border border-white/[0.08] transition-colors"
+    >
+      <span className="text-blue-400 font-bold">{symbol}</span>
+      <span>{currency}</span>
+    </button>
+  );
+};
 
 const SecondaryTopBar = () => {
   const location = useLocation();
@@ -42,7 +71,8 @@ const SecondaryTopBar = () => {
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Sync
         </span>
       </div>
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
+        <CurrencyPill />
         <ThemeToggleButton />
       </div>
     </header>
@@ -94,91 +124,95 @@ const PublicRoute = ({ children }) => {
 export const App = () => {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <LoginPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <RegisterPage />
-                </PublicRoute>
-              }
-            />
+      <CurrencyProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <React.Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route
+                  path="/login"
+                  element={
+                    <PublicRoute>
+                      <LoginPage />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <PublicRoute>
+                      <RegisterPage />
+                    </PublicRoute>
+                  }
+                />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transactions"
-              element={
-                <ProtectedRoute>
-                  <TransactionsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <ReportsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/categories"
-              element={
-                <ProtectedRoute>
-                  <CategoriesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/budgets"
-              element={
-                <ProtectedRoute>
-                  <BudgetsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Protected Routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/transactions"
+                  element={
+                    <ProtectedRoute>
+                      <TransactionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ProtectedRoute>
+                      <ReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/categories"
+                  element={
+                    <ProtectedRoute>
+                      <CategoriesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/budgets"
+                  element={
+                    <ProtectedRoute>
+                      <BudgetsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Fallback */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+                {/* Fallback */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </React.Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </CurrencyProvider>
     </ThemeProvider>
   );
 };

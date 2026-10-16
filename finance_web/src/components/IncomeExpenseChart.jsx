@@ -9,6 +9,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useCurrency } from '../context/CurrencyContext';
 import './Charts.css';
 
 ChartJS.register(
@@ -21,6 +22,7 @@ ChartJS.register(
 );
 
 export const IncomeExpenseChart = ({ data = [] }) => {
+  const { symbol, activeCurrency } = useCurrency();
   if (!data || data.length === 0) {
     return <div className="chart-empty-state">No trend data available</div>;
   }
@@ -76,7 +78,7 @@ export const IncomeExpenseChart = ({ data = [] }) => {
           label: (context) => {
             const isInc = context.dataset.label === 'Income';
             const sign = isInc ? '+' : '-';
-            return `${sign}₹${Number(context.raw).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            return `${sign}${symbol}${Number(context.raw).toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })}`;
           },
           labelTextColor: (context) => {
             return context.dataset.label === 'Income' ? '#34d399' : '#fb7185';
@@ -98,7 +100,7 @@ export const IncomeExpenseChart = ({ data = [] }) => {
         ticks: {
           color: '#64748b',
           font: { family: 'JetBrains Mono', size: 11 },
-          callback: (val) => `₹${Number(val).toLocaleString('en-IN')}`,
+          callback: (val) => `${symbol}${Number(val).toLocaleString(activeCurrency.locale)}`,
         },
       },
     },

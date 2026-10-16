@@ -6,6 +6,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { useCurrency } from '../context/CurrencyContext';
 import './Charts.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -23,6 +24,7 @@ const PALETTE = [
 ];
 
 export const SpendingChart = ({ categories = [], savingsRate = 0, showLegendPills = true }) => {
+  const { symbol, activeCurrency } = useCurrency();
   if (!categories || categories.length === 0) {
     return <div className="doughnut-empty-state">No category spending recorded yet</div>;
   }
@@ -71,7 +73,7 @@ export const SpendingChart = ({ categories = [], savingsRate = 0, showLegendPill
           label: (context) => {
             const val = Number(context.raw);
             const pct = totalAmount > 0 ? ((val / totalAmount) * 100).toFixed(2) : 0;
-            return ` ₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2 })} (${pct}%)`;
+            return ` ${symbol}${val.toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })} (${pct}%)`;
           },
         },
       },
@@ -86,7 +88,7 @@ export const SpendingChart = ({ categories = [], savingsRate = 0, showLegendPill
         <div className="doughnut-center-overlay">
           <span className="doughnut-center-label">EXPENSED</span>
           <span className="doughnut-center-value">
-            ₹{totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            {symbol}{totalAmount.toLocaleString(activeCurrency.locale, { maximumFractionDigits: 0 })}
           </span>
           {savingsRate !== undefined && (
             <span className="font-mono doughnut-center-saved">
@@ -123,7 +125,7 @@ export const SpendingChart = ({ categories = [], savingsRate = 0, showLegendPill
 
                 <div className="doughnut-legend-right">
                   <span className="font-mono doughnut-legend-amt">
-                    ₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {symbol}{amt.toLocaleString(activeCurrency.locale, { minimumFractionDigits: 2 })}
                   </span>
                   <span
                     className={`font-mono doughnut-legend-pct ${

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { User, Lock, CheckCircle2 } from 'lucide-react';
+import { User, Lock, CheckCircle2, Coins, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
 import api from '../api/client';
 import './SettingsPage.css';
 
 export const SettingsPage = () => {
   const { user, refreshUser } = useAuth();
+  const { currency, setCurrency, currencies } = useCurrency();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [profileMessage, setProfileMessage] = useState('');
@@ -15,6 +17,9 @@ export const SettingsPage = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
@@ -140,41 +145,142 @@ export const SettingsPage = () => {
           <form onSubmit={handleChangePassword} className="settings-form">
             <div className="form-group">
               <label className="form-label">Current Password</label>
-              <input
-                type="password"
-                required
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="form-input"
-              />
+              <div className="input-icon-wrap has-toggle">
+                <Lock size={16} className="input-icon" />
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="form-input"
+                />
+                <button
+                  type="button"
+                  className="input-icon-toggle"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  title={showCurrentPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">New Password (Min. 8 characters)</label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="form-input"
-              />
+              <div className="input-icon-wrap has-toggle">
+                <Lock size={16} className="input-icon" />
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Min. 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="form-input"
+                />
+                <button
+                  type="button"
+                  className="input-icon-toggle"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  title={showNewPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Confirm New Password</label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="form-input"
-              />
+              <div className="input-icon-wrap has-toggle">
+                <Lock size={16} className="input-icon" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Repeat new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="form-input"
+                />
+                <button
+                  type="button"
+                  className="input-icon-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <button type="submit" disabled={passwordSaving} className="btn btn-secondary">
               {passwordSaving ? 'Updating...' : 'Update Password'}
             </button>
           </form>
+        </div>
+
+        {/* Currency & Regional Preferences */}
+        <div className="card" style={{ gridColumn: 'span 2' }}>
+          <div className="card-header">
+            <h3 className="card-title with-icon">
+              <Coins size={18} /> Regional Currency Preference
+            </h3>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', marginTop: 0 }}>
+            Choose your preferred currency symbol and formatting for your transactions, dashboard metrics, budgets, and reports.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+            {Object.values(currencies).map((curr) => {
+              const isSelected = currency === curr.code;
+              return (
+                <div
+                  key={curr.code}
+                  onClick={() => setCurrency(curr.code)}
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
+                    border: '1px solid',
+                    borderColor: isSelected ? '#3b82f6' : 'var(--border-color)',
+                    backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-elevated)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.85rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      borderRadius: '0.5rem',
+                      background: isSelected ? '#3b82f6' : 'rgba(255, 255, 255, 0.05)',
+                      color: isSelected ? '#ffffff' : 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {curr.symbol}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                      {curr.label}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Code: {curr.code} • Sample: {curr.symbol}1,250.00
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

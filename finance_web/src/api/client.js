@@ -5,6 +5,7 @@ class ApiClient {
   constructor() {
     this.token = localStorage.getItem('access_token');
     this.refreshToken = localStorage.getItem('refresh_token');
+    this.refreshPromise = null;
   }
 
   setTokens(accessToken, refreshToken) {
@@ -85,21 +86,29 @@ class ApiClient {
   }
 
   async refreshAccessToken() {
-    try {
-      const resp = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: this.refreshToken }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        this.setTokens(data.access_token, data.refresh_token);
-        return true;
-      }
-    } catch {
-      // Fall through to failure
+    if (this.refreshPromise) {
+      return this.refreshPromise;
     }
-    return false;
+    this.refreshPromise = (async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.refreshToken }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          this.setTokens(data.access_token, data.refresh_token);
+          return true;
+        }
+      } catch {
+        // Fall through to failure
+      } finally {
+        this.refreshPromise = null;
+      }
+      return false;
+    })();
+    return this.refreshPromise;
   }
 
   // HTTP Helpers

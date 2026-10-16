@@ -81,6 +81,22 @@ def test_login_invalid_credentials(client):
         json={"email": "nonexistent@example.com", "password": "WrongPassword!"},
     )
     assert login_resp.status_code == 401
+    assert "No account found with this email. Please register first." in login_resp.json()["detail"]
+
+
+def test_login_incorrect_password(client):
+    payload = {
+        "email": "pass_check@example.com",
+        "password": "CorrectPassword123!",
+        "full_name": "Pass Check",
+    }
+    client.post("/api/v1/auth/register", json=payload)
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": "pass_check@example.com", "password": "WrongPassword123!"},
+    )
+    assert login_resp.status_code == 401
+    assert "Incorrect password. Please try again." in login_resp.json()["detail"]
 
 
 def test_refresh_token_success(client):
